@@ -92,7 +92,10 @@ setup-vagrant:
 vagrant-fedora-no-vdso: setup-vagrant
 	./vagrant.sh fedora-no-vdso
 
-.PHONY: setup-vagrant vagrant-fedora-no-vdso
+vagrant-fedora-non-root: setup-vagrant
+	./vagrant.sh fedora-non-root
+
+.PHONY: setup-vagrant vagrant-fedora-no-vdso vagrant-fedora-non-root
 
 %:
 	$(MAKE) -C ../build $@$(target-suffix)
