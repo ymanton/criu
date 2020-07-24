@@ -7,6 +7,9 @@
 #include "asm/kerndat.h"
 #include "util-vdso.h"
 
+#define RELEASE_SIZE 66
+#define NODENAME_SIZE 66
+
 struct stat;
 
 /*
@@ -74,6 +77,15 @@ struct kerndat_s {
 	bool has_pidfd_getfd;
 	bool has_nspid;
 	bool has_nftables_concat;
+	/*
+	 * For non-root CRIU we use uname(2) to remember the nodename and
+	 * release. If the kerndat file has a different nodename or release
+	 * we assume that there has been a reboot and we need to recreate it.
+	 * nodename in addition to release in case the kerndat file is on a
+	 * NFS shared file system.
+	 */
+	char release[RELEASE_SIZE];
+	char nodename[NODENAME_SIZE];
 };
 
 extern struct kerndat_s kdat;

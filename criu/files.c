@@ -1319,6 +1319,8 @@ out:
 
 static int fchroot(int fd)
 {
+	if (!has_cap_sys_chroot(opts.cap_eff))
+		return 0;
 	/*
 	 * There's no such thing in syscalls. We can emulate
 	 * it using fchdir()
