@@ -1826,6 +1826,7 @@ int cr_dump_tasks(pid_t pid)
 	root_item = alloc_pstree_item();
 	if (!root_item)
 		goto err;
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	root_item->pid->real = pid;
 
 	pre_dump_ret = run_scripts(ACT_PRE_DUMP);
@@ -1833,50 +1834,51 @@ int cr_dump_tasks(pid_t pid)
 		pr_err("Pre dump script failed with %d!\n", pre_dump_ret);
 		goto err;
 	}
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (init_stats(DUMP_STATS))
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (init_pidfd_store_hash())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (cr_plugin_init(CR_PLUGIN_STAGE__DUMP))
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (lsm_check_opts())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (irmap_load_cache())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (cpu_init())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (vdso_init_dump())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (cgp_init(opts.cgroup_props,
 		     opts.cgroup_props ?
 		     strlen(opts.cgroup_props) : 0,
 		     opts.cgroup_props_file))
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (parse_cg_info())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (prepare_inventory(&he))
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (opts.cpu_cap & CPU_CAP_IMAGE) {
 		if (cpu_dump_cpuinfo())
 			goto err;
 	}
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (connect_to_page_server_to_send() < 0)
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (setup_alarm_handler())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	/*
 	 * The collect_pstree will also stop (PTRACE_SEIZE) the tasks
 	 * thus ensuring that they don't modify anything we collect
@@ -1885,26 +1887,26 @@ int cr_dump_tasks(pid_t pid)
 
 	if (collect_pstree())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (collect_pstree_ids())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (network_lock())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (collect_file_locks())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (collect_namespaces(true) < 0)
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	glob_imgset = cr_glob_imgset_open(O_DUMP);
 	if (!glob_imgset)
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (seccomp_collect_dump_filters() < 0)
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	/* Errors handled later in detect_pid_reuse */
 	parent_ie = get_parent_inventory();
 
@@ -1912,7 +1914,7 @@ int cr_dump_tasks(pid_t pid)
 		if (dump_one_task(item, parent_ie))
 			goto err;
 	}
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (parent_ie) {
 		inventory_entry__free_unpacked(parent_ie, NULL);
 		parent_ie = NULL;
@@ -1926,23 +1928,23 @@ int cr_dump_tasks(pid_t pid)
 	 */
 	if (dead_pid_conflict())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	/* MNT namespaces are dumped after files to save remapped links */
 	if (dump_mnt_namespaces() < 0)
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (dump_file_locks())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (dump_verify_tty_sids())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (dump_zombies())
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (dump_pstree(root_item))
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	/*
 	 * TODO: cr_dump_shmem has to be called before dump_namespaces(),
 	 * because page_ids is a global variable and it is used to dump
@@ -1952,40 +1954,43 @@ int cr_dump_tasks(pid_t pid)
 	ret = cr_dump_shmem();
 	if (ret)
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	if (root_ns_mask) {
 		ret = dump_namespaces(root_item, root_ns_mask);
 		if (ret)
 			goto err;
+		pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	}
 
 	if ((root_ns_mask & CLONE_NEWTIME) == 0) {
 		ret = dump_time_ns(0);
 		if (ret)
 			goto err;
+		pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	}
 
 	ret = dump_cgroups();
 	if (ret)
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	ret = fix_external_unix_sockets();
 	if (ret)
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	ret = tty_post_actions();
 	if (ret)
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	ret = inventory_save_uptime(&he);
 	if (ret)
 		goto err;
-
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 	he.has_pre_dump_mode = false;
 
 	ret = write_img_inventory(&he);
 	if (ret)
 		goto err;
+	pr_info("%s:%d: cr_dump_tasks\n", __FILE__, __LINE__);
 err:
 	if (parent_ie)
 		inventory_entry__free_unpacked(parent_ie, NULL);
