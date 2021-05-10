@@ -1714,14 +1714,18 @@ static int cr_dump_finish(int ret)
 {
 	int post_dump_ret = 0;
 
+	pr_info("%s:%d: cr_dump_finish(ret=%d)\n", __FILE__, __LINE__, ret);
+
 	if (disconnect_from_page_server())
 		ret = -1;
 
+	pr_info("%s:%d: cr_dump_finish, ret=%d\n", __FILE__, __LINE__, ret);
 	close_cr_imgset(&glob_imgset);
 
 	if (bfd_flush_images())
 		ret = -1;
 
+	pr_info("%s:%d: cr_dump_finish, ret=%d\n", __FILE__, __LINE__, ret);
 	cr_plugin_fini(CR_PLUGIN_STAGE__DUMP, ret);
 	cgp_fini();
 
@@ -1773,6 +1777,7 @@ static int cr_dump_finish(int ret)
 	if (!ret && opts.lazy_pages)
 		ret = cr_lazy_mem_dump();
 
+	pr_info("%s:%d: cr_dump_finish, ret=%d\n", __FILE__, __LINE__, ret);
 	if (arch_set_thread_regs(root_item, true) < 0)
 		return -1;
 	pstree_switch_state(root_item,
