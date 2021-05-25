@@ -2220,18 +2220,21 @@ static int restore_root_task(struct pstree_item *init)
 	int root_seized = 0;
 	struct pstree_item *item;
 
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	ret = run_scripts(ACT_PRE_RESTORE);
 	if (ret != 0) {
 		pr_err("Aborting restore due to pre-restore script ret code %d\n", ret);
 		return -1;
 	}
 
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	fd = open("/proc", O_DIRECTORY | O_RDONLY);
 	if (fd < 0) {
 		pr_perror("Unable to open /proc");
 		return -1;
 	}
 
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	ret = install_service_fd(CR_PROC_FD_OFF, fd);
 	if (ret < 0)
 		return -1;
@@ -2243,18 +2246,22 @@ static int restore_root_task(struct pstree_item *init)
 	 * this later.
 	 */
 
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (prepare_userns_hook())
 		return -1;
 
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (prepare_namespace_before_tasks())
 		return -1;
 
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (vpid(init) == INIT_PID) {
 		if (!(root_ns_mask & CLONE_NEWPID)) {
 			pr_err("This process tree can only be restored "
 				"in a new pid namespace.\n"
 				"criu should be re-executed with the "
 				"\"--namespace pid\" option.\n");
+			pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 			return -1;
 		}
 	} else if (root_ns_mask & CLONE_NEWPID) {
@@ -2267,6 +2274,7 @@ static int restore_root_task(struct pstree_item *init)
 		ns = lookup_ns_by_id(init->ids->pid_ns_id, &pid_ns_desc);
 		if (!ns || !ns->ext_key) {
 			pr_err("Can't restore pid namespace without the process init\n");
+			pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 			return -1;
 		}
 	}
@@ -2274,11 +2282,13 @@ static int restore_root_task(struct pstree_item *init)
 	__restore_switch_stage_nw(CR_STATE_ROOT_TASK);
 
 	ret = fork_with_pid(init);
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (ret < 0)
 		goto out;
 
 	restore_origin_ns_hook();
 
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (rsti(init)->clone_flags & CLONE_PARENT) {
 		struct sigaction act;
 
@@ -2298,10 +2308,12 @@ static int restore_root_task(struct pstree_item *init)
 
 		if (ptrace(PTRACE_SEIZE, init->pid->real, 0, 0)) {
 			pr_perror("Can't attach to init");
+			pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 			goto out_kill;
 		}
 	}
 
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (!root_ns_mask)
 		goto skip_ns_bouncing;
 
@@ -2309,6 +2321,7 @@ static int restore_root_task(struct pstree_item *init)
 	 * uid_map and gid_map must be filled from a parent user namespace.
 	 * prepare_userns_creds() must be called after filling mappings.
 	 */
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if ((root_ns_mask & CLONE_NEWUSER) && prepare_userns(init))
 		goto out_kill;
 
@@ -2318,17 +2331,21 @@ static int restore_root_task(struct pstree_item *init)
 		goto out_kill;
 
 	ret = run_scripts(ACT_SETUP_NS);
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (ret)
 		goto out_kill;
 
 	ret = restore_switch_stage(CR_STATE_PREPARE_NAMESPACES);
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (ret)
 		goto out_kill;
 
 	if (root_ns_mask & CLONE_NEWNS) {
 		mnt_ns_fd = open_proc(init->pid->real, "ns/mnt");
-		if (mnt_ns_fd < 0)
+		if (mnt_ns_fd < 0) {
+			pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 			goto out_kill;
+		}
 	}
 
 	if (root_ns_mask & opts.empty_ns & CLONE_NEWNET) {
@@ -2340,11 +2357,14 @@ static int restore_root_task(struct pstree_item *init)
 		 * need to return these rules by hands.
 		 */
 		ret = network_lock_internal();
-		if (ret)
+		if (ret) {
+			pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 			goto out_kill;
+		}
 	}
 
 	ret = run_scripts(ACT_POST_SETUP_NS);
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (ret)
 		goto out_kill;
 
@@ -2353,10 +2373,12 @@ static int restore_root_task(struct pstree_item *init)
 skip_ns_bouncing:
 
 	ret = restore_wait_inprogress_tasks();
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (ret < 0)
 		goto out_kill;
 
 	ret = apply_memfd_seals();
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (ret < 0)
 		goto out_kill;
 
@@ -2371,23 +2393,29 @@ skip_ns_bouncing:
 	}
 
 	ret = restore_switch_stage(CR_STATE_RESTORE_SIGCHLD);
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (ret < 0)
 		goto out_kill;
 
 	ret = stop_usernsd();
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (ret < 0)
 		goto out_kill;
 
 	ret = move_veth_to_bridge();
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (ret < 0)
 		goto out_kill;
 
 	ret = prepare_cgroup_properties();
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	if (ret < 0)
 		goto out_kill;
 
-	if (fault_injected(FI_POST_RESTORE))
+	if (fault_injected(FI_POST_RESTORE)) {
+		pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 		goto out_kill;
+	}
 
 	ret = run_scripts(ACT_POST_RESTORE);
 	if (ret != 0) {
@@ -2401,13 +2429,17 @@ skip_ns_bouncing:
 	 * There is no need to call try_clean_remaps() after this point,
 	 * as restore went OK and all ghosts were removed by the openers.
 	 */
-	if (depopulate_roots_yard(mnt_ns_fd, false))
+	if (depopulate_roots_yard(mnt_ns_fd, false)) {
+		pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 		goto out_kill;
+	}
 
 	close_safe(&mnt_ns_fd);
 
-	if (write_restored_pid())
+	if (write_restored_pid()) {
+		pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 		goto out_kill;
+	}
 
 	/* Unlock network before disabling repair mode on sockets */
 	network_unlock();
@@ -2425,8 +2457,10 @@ skip_ns_bouncing:
 	 */
 	attach_to_tasks(root_seized);
 
-	if (restore_switch_stage(CR_STATE_RESTORE_CREDS))
+	if (restore_switch_stage(CR_STATE_RESTORE_CREDS)) {
+		pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 		goto out_kill_network_unlocked;
+	}
 
 	timing_stop(TIME_RESTORE);
 
@@ -2435,8 +2469,10 @@ skip_ns_bouncing:
 		goto out_kill_network_unlocked;
 	}
 
-	if (lazy_pages_finish_restore())
+	if (lazy_pages_finish_restore()) {
+		pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 		goto out_kill_network_unlocked;
+	}
 
 	__restore_switch_stage(CR_STATE_COMPLETE);
 
@@ -2447,8 +2483,9 @@ skip_ns_bouncing:
 		goto out_kill_network_unlocked;
 	}
 
-	if (clear_breakpoints())
+	if (clear_breakpoints()) {
 		pr_err("Unable to flush breakpoints\n");
+	}
 
 	finalize_restore();
 
@@ -2462,8 +2499,10 @@ skip_ns_bouncing:
 	fini_cgroup();
 
 	/* Detaches from processes and they continue run through sigreturn. */
-	if (finalize_restore_detach())
+	if (finalize_restore_detach()) {
+		pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 		goto out_kill_network_unlocked;
+	}
 
 	pr_info("Restore finished successfully. Tasks resumed.\n");
 	write_stats(RESTORE_STATS);
@@ -2479,11 +2518,13 @@ skip_ns_bouncing:
 		reap_zombies();
 	}
 
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	return 0;
 
 out_kill_network_unlocked:
 	pr_err("Killing processes because of failure on restore.\nThe Network was unlocked so some data or a connection may have been lost.\n");
 out_kill:
+	pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 	/*
 	 * The processes can be killed only when all of them have been created,
 	 * otherwise an external processes can be killed.
@@ -2491,6 +2532,7 @@ out_kill:
 	if (vpid(root_item) == INIT_PID) {
 		int status;
 
+		pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 		/* Kill init */
 		if (root_item->pid->real > 0)
 			kill(root_item->pid->real, SIGKILL);
@@ -2501,6 +2543,7 @@ out_kill:
 	} else {
 		struct pstree_item *pi;
 
+		pr_info("%s:%d: restore_root_task\n", __FILE__, __LINE__);
 		for_each_pstree_item(pi)
 			if (pi->pid->real > 0)
 				kill(pi->pid->real, SIGKILL);
