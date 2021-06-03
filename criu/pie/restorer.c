@@ -1858,26 +1858,41 @@ long __export_restore_task(struct task_restore_args *args)
 
 	restore_finish_stage(task_entries_local, CR_STATE_RESTORE);
 
-	if (wait_helpers(args) < 0)
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
+	if (wait_helpers(args) < 0) {
+		pr_info("%s:%d: __export_restore_task\n", __FILE__, __LINE__);
 		goto core_restore_end;
-	if (wait_zombies(args) < 0)
+	}
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
+	if (wait_zombies(args) < 0) {
+		pr_info("%s:%d: __export_restore_task\n", __FILE__, __LINE__);
 		goto core_restore_end;
+	}
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	ksigfillset(&to_block);
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	ret = sys_sigprocmask(SIG_SETMASK, &to_block, NULL, sizeof(k_rtsigset_t));
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	if (ret) {
 		pr_err("Unable to block signals %ld\n", ret);
 		goto core_restore_end;
 	}
 
-	if (cleanup_current_inotify_events(args))
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
+	if (cleanup_current_inotify_events(args)) {
+		pr_info("%s:%d: __export_restore_task\n", __FILE__, __LINE__);
 		goto core_restore_end;
+	}
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	if (!args->compatible_mode) {
+		pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 		ret = sys_sigaction(SIGCHLD, &args->sigchld_act,
 				NULL, sizeof(k_rtsigset_t));
 	} else {
 		void *stack = alloc_compat_syscall_stack();
+		pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 
 		if (!stack) {
 			pr_err("Failed to allocate 32-bit stack for sigaction\n");
@@ -1887,53 +1902,76 @@ long __export_restore_task(struct task_restore_args *args)
 				(void*)&args->sigchld_act);
 		free_compat_syscall_stack(stack);
 	}
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	if (ret) {
 		pr_err("Failed to restore SIGCHLD: %ld\n", ret);
 		goto core_restore_end;
 	}
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	ret = restore_signals(args->siginfo, args->siginfo_n, true);
-	if (ret)
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
+	if (ret) {
+		pr_info("%s:%d: __export_restore_task\n", __FILE__, __LINE__);
 		goto core_restore_end;
+	}
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	ret = restore_signals(args->t->siginfo, args->t->siginfo_n, false);
-	if (ret)
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
+	if (ret) {
+		pr_info("%s:%d: __export_restore_task\n", __FILE__, __LINE__);
 		goto core_restore_end;
+	}
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	restore_finish_stage(task_entries_local, CR_STATE_RESTORE_SIGCHLD);
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	rst_tcp_socks_all(args);
 
 	/*
 	 * Make sure it's before creds, since it's privileged
 	 * operation bound to uid 0 in current user ns.
 	 */
-	if (restore_seccomp(args->t))
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
+	if (restore_seccomp(args->t)) {
+		pr_info("%s:%d: __export_restore_task\n", __FILE__, __LINE__);
 		goto core_restore_end;
+	}
 
 	/*
 	 * Writing to last-pid is CAP_SYS_ADMIN protected,
 	 * turning off TCP repair is CAP_SYS_NED_ADMIN protected,
 	 * thus restore* creds _after_ all of the above.
 	 */
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	ret = restore_creds(args->t->creds_args, args->proc_fd,
 			    args->lsm_type);
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	ret = ret || restore_dumpable_flag(&args->mm);
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	ret = ret || restore_pdeath_sig(args->t);
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	ret = ret || restore_child_subreaper(args->child_subreaper);
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	futex_set_and_wake(&thread_inprogress, args->nr_threads);
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	restore_finish_stage(task_entries_local, CR_STATE_RESTORE_CREDS);
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	if (ret)
 		BUG();
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	/* Wait until children stop to use args->task_entries */
 	futex_wait_while_gt(&thread_inprogress, 1);
 
+	pr_info("%s:%d: __export_restore_task: proc_fd=%d\n", __FILE__, __LINE__, args->proc_fd);
 	sys_close(args->proc_fd);
-	std_log_set_fd(-1);
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 
 	/*
 	 * The code that prepared the itimers makes sure that the
@@ -1944,15 +1982,20 @@ long __export_restore_task(struct task_restore_args *args)
 		(args->itimers[i].it_interval.tv_sec ||	\
 		 args->itimers[i].it_interval.tv_usec)
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	if (itimer_armed(args, 0))
 		sys_setitimer(ITIMER_REAL, &args->itimers[0], NULL);
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	if (itimer_armed(args, 1))
 		sys_setitimer(ITIMER_VIRTUAL, &args->itimers[1], NULL);
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	if (itimer_armed(args, 2))
 		sys_setitimer(ITIMER_PROF, &args->itimers[2], NULL);
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	restore_posix_timers(args);
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	sys_munmap(args->rst_mem, args->rst_mem_size);
 
 	/*
@@ -1960,6 +2003,9 @@ long __export_restore_task(struct task_restore_args *args)
 	 */
 	new_sp = (long)rt_sigframe + RT_SIGFRAME_OFFSET(rt_sigframe);
 
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
+	std_log_set_fd(-1);
+	pr_info("%s:%d: __export_restore_task: \n", __FILE__, __LINE__);
 	/*
 	 * Prepare the stack and call for sigreturn,
 	 * pure assembly since we don't need any additional

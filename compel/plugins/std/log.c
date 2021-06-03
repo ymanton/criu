@@ -115,8 +115,11 @@ static void sbuf_putc(struct simple_buf *b, char c)
 	}
 }
 
+static void print_string(const char *msg, struct simple_buf *b);
+
 void std_log_set_fd(int fd)
 {
+	print_on_level(3, "%s:%d: std_log_set_fd: logfd=%d\n", __FILE__, __LINE__, logfd);
 	sys_close(logfd);
 	logfd = fd;
 }

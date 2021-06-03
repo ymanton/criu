@@ -1788,6 +1788,8 @@ static int restore_task_with_children(void *_arg)
 	pid_t pid;
 	int ret;
 
+	pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
+
 	current = ca->item;
 
 	if (current != root_item) {
@@ -1796,8 +1798,10 @@ static int restore_task_with_children(void *_arg)
 
 		/* Determine PID in CRIU's namespace */
 		fd = get_service_fd(CR_PROC_FD_OFF);
-		if (fd < 0)
+		if (fd < 0) {
+			pr_perror("Unable to get service fd");
 			goto err;
+		}
 
 		ret = readlinkat(fd, "self", buf, sizeof(buf) - 1);
 		if (ret < 0) {
@@ -1818,8 +1822,10 @@ static int restore_task_with_children(void *_arg)
 		goto err;
 	}
 
-	if (log_init_by_pid(vpid(current)))
+	if (log_init_by_pid(vpid(current))) {
+		pr_info("%s:%d: restore_task_with_children: log_init_by_pid() != 0\n", __FILE__, __LINE__);
 		return -1;
+	}
 
 	if (current->parent == NULL) {
 		/*
@@ -1839,20 +1845,28 @@ static int restore_task_with_children(void *_arg)
 		}
 
 		if (root_ns_mask & CLONE_NEWTIME) {
-			if (prepare_timens(current->ids->time_ns_id))
+			if (prepare_timens(current->ids->time_ns_id)) {
+				pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 				goto err;
+			}
 		} else if (kdat.has_timens) {
-			if (prepare_timens(0))
+			if (prepare_timens(0)) {
+				pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 				goto err;
+			}
 		}
 
 		/* Wait prepare_userns */
-		if (restore_finish_ns_stage(CR_STATE_ROOT_TASK, CR_STATE_PREPARE_NAMESPACES) < 0)
+		if (restore_finish_ns_stage(CR_STATE_ROOT_TASK, CR_STATE_PREPARE_NAMESPACES) < 0) {
+			pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 			goto err;
+		}
 	}
 
-	if (needs_prep_creds(current) && (prepare_userns_creds()))
+	if (needs_prep_creds(current) && (prepare_userns_creds())) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
 	/*
 	 * Call this _before_ forking to optimize cgroups
@@ -1860,8 +1874,10 @@ static int restore_task_with_children(void *_arg)
 	 * we will only move the root one there, others will
 	 * just have it inherited.
 	 */
-	if (prepare_task_cgroup(current) < 0)
+	if (prepare_task_cgroup(current) < 0) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
 	/* Restore root task */
 	if (current->parent == NULL) {
@@ -1878,61 +1894,91 @@ static int restore_task_with_children(void *_arg)
 		 * namespaces and do not care for the rest of the cases.
 		 * Thus -- mount proc at custom location for any new namespace
 		 */
-		if (mount_proc())
+		if (mount_proc()) {
+			pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 			goto err;
+		}
 
-		if (!files_collected() && collect_image(&tty_cinfo))
+		if (!files_collected() && collect_image(&tty_cinfo)) {
+			pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 			goto err;
-		if (collect_images(before_ns_cinfos, ARRAY_SIZE(before_ns_cinfos)))
+		}
+		if (collect_images(before_ns_cinfos, ARRAY_SIZE(before_ns_cinfos))) {
+			pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 			goto err;
+		}
 
-		if (prepare_namespace(current, ca->clone_flags))
+		if (prepare_namespace(current, ca->clone_flags)) {
+			pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 			goto err;
+		}
 
-		if (restore_finish_ns_stage(CR_STATE_PREPARE_NAMESPACES, CR_STATE_FORKING) < 0)
+		if (restore_finish_ns_stage(CR_STATE_PREPARE_NAMESPACES, CR_STATE_FORKING) < 0) {
+			pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 			goto err;
+		}
 
-		if (root_prepare_shared())
+		if (root_prepare_shared()) {
+			pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 			goto err;
+		}
 
-		if (populate_root_fd_off())
+		if (populate_root_fd_off()) {
+			pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 			goto err;
+		}
 	}
 
-	if (setup_newborn_fds(current))
+	if (setup_newborn_fds(current)) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
-	if (restore_task_mnt_ns(current))
+	if (restore_task_mnt_ns(current)) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
-	if (prepare_mappings(current))
+	if (prepare_mappings(current)) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
-	if (prepare_sigactions(ca->core) < 0)
+	if (prepare_sigactions(ca->core) < 0) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
 	if (fault_injected(FI_RESTORE_ROOT_ONLY)) {
 		pr_info("fault: Restore root task failure!\n");
 		kill(getpid(), SIGKILL);
 	}
 
-	if (open_transport_socket())
+	if (open_transport_socket()) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
 	timing_start(TIME_FORK);
 
-	if (create_children_and_session())
+	if (create_children_and_session()) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
 	timing_stop(TIME_FORK);
 
-	if (populate_pid_proc())
+	if (populate_pid_proc()) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
 	sfds_protected = true;
 
-	if (unmap_guard_pages(current))
+	if (unmap_guard_pages(current)) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
 	restore_pgid();
 
@@ -1945,23 +1991,30 @@ static int restore_task_with_children(void *_arg)
 		 *
 		 * It means that all tasks entered into their namespaces.
 		 */
-		if (restore_wait_other_tasks())
+		if (restore_wait_other_tasks()) {
+			pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 			goto err;
+		}
 		fini_restore_mntns();
 		__restore_switch_stage(CR_STATE_RESTORE);
 	} else {
-		if (restore_finish_stage(task_entries, CR_STATE_FORKING) < 0)
+		if (restore_finish_stage(task_entries, CR_STATE_FORKING) < 0) {
+			pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 			goto err;
+		}
 	}
 
-	if (restore_one_task(vpid(current), ca->core))
+	if (restore_one_task(vpid(current), ca->core)) {
+		pr_info("%s:%d: restore_task_with_children\n", __FILE__, __LINE__);
 		goto err;
+	}
 
 	return 0;
 
 err:
 	if (current->parent == NULL)
 		futex_abort_and_wake(&task_entries->nr_in_progress);
+	pr_info("%s:%d: restore_task_with_children: exit(1)\n", __FILE__, __LINE__);
 	exit(1);
 }
 
