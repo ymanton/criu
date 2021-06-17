@@ -1548,6 +1548,7 @@ int inherit_fd_parse(char *optarg)
 		return 0;
 	}
 
+	pr_info("Adding inherit-fd[%d]:%s\n", fd, cp);
 	return inherit_fd_add(fd, cp);
 }
 
@@ -1571,6 +1572,7 @@ int inherit_fd_add(int fd, char *key)
 	inh->inh_id = key;
 	inh->inh_fd = fd;
 	list_add_tail(&inh->inh_list, &opts.inherit_fds);
+	pr_debug("Adding inherit-fd fd[%d]:%s to list\n", fd, key);
 	return 0;
 }
 

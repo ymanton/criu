@@ -737,6 +737,7 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			}
 			break;
 		case 1062:
+			pr_info("inherit-fd parsing optarg=%s\n", optarg);
 			if (inherit_fd_parse(optarg) < 0)
 				return 1;
 			break;
