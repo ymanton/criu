@@ -1548,6 +1548,7 @@ int inherit_fd_parse(char *optarg)
 		return 0;
 	}
 
+	cp = strdup(cp);
 	pr_info("Adding inherit-fd[%d]:%s\n", fd, cp);
 	return inherit_fd_add(fd, cp);
 }
