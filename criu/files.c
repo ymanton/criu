@@ -1510,7 +1510,7 @@ int inh_fd_max = -1;
 
 int inherit_fd_parse(char *optarg)
 {
-	char *cp = NULL;
+	char *cp = NULL/*, *cp2 = NULL*/;
 	int n = -1;
 	int fd = -1;
 	int dbg = 0;
@@ -1548,9 +1548,9 @@ int inherit_fd_parse(char *optarg)
 		return 0;
 	}
 
-	cp = strdup(cp);
-	pr_info("Adding inherit-fd[%d]:%s\n", fd, cp);
-	return inherit_fd_add(fd, cp);
+	//cp2 = strdup(cp);
+	//pr_info("Adding inherit-fd[%d]:%s (%p) (orig @ %p)\n", fd, cp2, cp2, cp);
+	return inherit_fd_add(fd, cp/*cp2*/);
 }
 
 int inherit_fd_add(int fd, char *key)
@@ -1573,7 +1573,7 @@ int inherit_fd_add(int fd, char *key)
 	inh->inh_id = key;
 	inh->inh_fd = fd;
 	list_add_tail(&inh->inh_list, &opts.inherit_fds);
-	pr_debug("Adding inherit-fd fd[%d]:%s to list\n", fd, key);
+	pr_info("Adding inherit-fd fd[%d]:%s (%p) to list\n", fd, key, key);
 	return 0;
 }
 

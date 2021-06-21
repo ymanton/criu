@@ -58,6 +58,7 @@ int parse_statement(int i, char *line, char **configuration)
 			configuration[i] = NULL;
 			break;
 		}
+		pr_info("Parsed line: '%s' in buffer %p starting at %d and got %s in buffer %p\n", line, line, offset, configuration[i], configuration[i]);
 
 		/* Ignore comments - everything between '#' and '\n' */
 		if (configuration[i][0] == '#') {
@@ -737,7 +738,7 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			}
 			break;
 		case 1062:
-			pr_info("inherit-fd parsing optarg=%s\n", optarg);
+			pr_info("inherit-fd parsing optarg=%s (%p)\n", optarg, optarg);
 			if (inherit_fd_parse(optarg) < 0)
 				return 1;
 			break;
