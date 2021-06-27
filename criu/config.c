@@ -644,7 +644,7 @@ int parse_options(int argc, char **argv, bool *usage_error,
 				goto bad_arg;
 			break;
 		case 'r':
-			SET_CHAR_OPTS(root, optarg);
+			opts.root = optarg;
 			break;
 		case 'd':
 			opts.restore_detach = true;
@@ -653,13 +653,13 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			opts.restore_sibling = true;
 			break;
 		case 'D':
-			SET_CHAR_OPTS(imgs_dir, optarg);
+			opts.imgs_dir = optarg;
 			break;
 		case 'W':
-			SET_CHAR_OPTS(work_dir, optarg);
+			opts.work_dir = optarg;
 			break;
 		case 'o':
-			SET_CHAR_OPTS(output, optarg);
+			opts.output = optarg;
 			break;
 		case 'J':
 			if (parse_join_ns(optarg))
@@ -684,7 +684,7 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			break;
 		}
 		case 1046:
-			SET_CHAR_OPTS(pidfile, optarg);
+			opts.pidfile = optarg;
 			break;
 		case 1047:
 			{
@@ -708,7 +708,7 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			}
 			break;
 		case 1051:
-			SET_CHAR_OPTS(addr, optarg);
+			opts.addr = optarg;
 			break;
 		case 1052:
 			opts.port = atoi(optarg);
@@ -722,7 +722,7 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			opts.handle_file_locks = true;
 			break;
 		case 1053:
-			SET_CHAR_OPTS(img_parent, optarg);
+			opts.img_parent = optarg;
 			break;
 		case 1057:
 			if (parse_cpu_cap(&opts, optarg))
@@ -735,7 +735,7 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			pr_err("--ms is deprecated; see \"Check options\" of criu --help\n");
 			return 1;
 		case 'L':
-			SET_CHAR_OPTS(libdir, optarg);
+			opts.libdir = optarg;
 			opts.libdir = optarg;
 			break;
 		case 1059:
@@ -787,7 +787,7 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			}
 			break;
 		case 1068:
-			SET_CHAR_OPTS(freeze_cgroup, optarg);
+			opts.freeze_cgroup = optarg;
 			break;
 		case 1069:
 			opts.ghost_limit = parse_size(optarg);
@@ -799,7 +799,7 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			}
 			break;
 		case 1071:
-			SET_CHAR_OPTS(lsm_profile, optarg);
+			opts.lsm_profile = optarg;
 			opts.lsm_supplied = true;
 			break;
 		case 1072:
@@ -848,10 +848,10 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			opts.check_experimental_features = true;
 			break;
 		case 1080:
-			SET_CHAR_OPTS(cgroup_props, optarg);
+			opts.cgroup_props = optarg;
 			break;
 		case 1081:
-			SET_CHAR_OPTS(cgroup_props_file, optarg);
+			opts.cgroup_props_file = optarg;
 			break;
 		case 1082:
 			if (!cgp_add_dump_controller(optarg))
@@ -871,19 +871,19 @@ int parse_options(int argc, char **argv, bool *usage_error,
 			opts.ps_socket = atoi(optarg);
 			break;
 		case 1092:
-			SET_CHAR_OPTS(tls_cacert, optarg);
+			opts.tls_cacert = optarg;
 			break;
 		case 1093:
-			SET_CHAR_OPTS(tls_cacrl, optarg);
+			opts.tls_cacrl = optarg;
 			break;
 		case 1094:
-			SET_CHAR_OPTS(tls_cert, optarg);
+			opts.tls_cert = optarg;
 			break;
 		case 1095:
-			SET_CHAR_OPTS(tls_key, optarg);
+			opts.tls_key = optarg;
 			break;
 		case 1096:
-			SET_CHAR_OPTS(cgroup_yard, optarg);
+			opts.cgroup_yard = optarg;
 			break;
 		case 1097:
 			if (!strcmp("read", optarg)) {
