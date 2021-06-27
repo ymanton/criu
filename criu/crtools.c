@@ -543,5 +543,6 @@ opt_pid_missing:
 	goto return_with_code;
 
 return_with_code:
+	free_options();
 	return ret;
 }

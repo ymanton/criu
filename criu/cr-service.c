@@ -744,6 +744,7 @@ exit:
 		}
 	}
 
+	free_options();
 	return success ? 0 : 1;
 }
 
@@ -781,6 +782,7 @@ exit:
 		logfd = log_get_fd();
 		if (dup2(logfd, STDOUT_FILENO) == -1 || dup2(logfd, STDERR_FILENO) == -1) {
 			pr_perror("Failed to redirect stdout and stderr to the logfile");
+			free_options();
 			return 1;
 		}
 
@@ -792,6 +794,7 @@ exit:
 		success = false;
 	}
 
+	free_options();
 	return success ? 0 : 1;
 }
 
@@ -811,9 +814,12 @@ static int check(int sk, CriuOpts *req)
 	if (pid == 0) {
 		setproctitle("check --rpc");
 
-		if (setup_opts_from_req(sk, req))
+		if (setup_opts_from_req(sk, req)) {
+			free_options();
 			exit(1);
+		}
 
+		free_options();
 		exit(!!cr_check());
 	}
 	if (waitpid(pid, &status, 0) != pid) {
@@ -852,6 +858,7 @@ static int pre_dump_using_req(int sk, CriuOpts *req)
 
 		ret = 0;
 cout:
+		free_options();
 		exit(ret);
 	}
 
@@ -936,6 +943,7 @@ static int start_page_server_req(int sk, CriuOpts *req, bool daemon_mode)
 
 		ret = 0;
 out_ch:
+		free_options();
 		if (daemon_mode && ret < 0 && pid > 0)
 			kill(pid, SIGKILL);
 		close(start_pipe[1]);
@@ -975,6 +983,7 @@ out_ch:
 
 	pr_debug("Page server started\n");
 out:
+	free_options();
 	resp.type = CRIU_REQ_TYPE__PAGE_SERVER;
 	resp.success = success;
 	return send_criu_msg(sk, &resp);
@@ -1177,6 +1186,7 @@ static int handle_cpuinfo(int sk, CriuReq *msg)
 		else
 			ret = cpuinfo_check();
 cout:
+		free_options();
 		exit(ret);
 	}
 

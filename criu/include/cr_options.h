@@ -180,6 +180,7 @@ struct cr_options {
 extern struct cr_options opts;
 extern char *rpc_cfg_file;
 
+extern void free_options(void);
 extern int parse_options(int argc, char **argv, bool *usage_error, bool *has_exec_cmd, int state);
 extern int check_options(void);
 extern void init_opts(void);

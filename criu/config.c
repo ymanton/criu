@@ -32,6 +32,18 @@
 struct cr_options opts;
 char *rpc_cfg_file;
 
+/*
+ * This is a collection of argc/argv pairs from all sources specified by the PARSING_ #defines in
+ * both tool mode and RPC mode.
+ * Each argc/argv pair is guaranteed to either be 0/NULL or >0 and a valid pointer to memory that
+ * will be accessible until the process exits for tool mode and until the RPC returns in RPC mode.
+ */
+static struct arg_vector
+{
+	int argc;
+	char **argv;
+} argvs[PARSING_LAST - 1];
+
 static int count_elements(char **to_count)
 {
 	int count = 0;
@@ -437,6 +449,23 @@ Esyntax:
 	return -1;
 }
 
+void free_options(void)
+{
+	int conf;
+	for (conf = PARSING_GLOBAL_CONF; conf < PARSING_LAST; conf++) {
+		struct arg_vector *av = &argvs[conf - PARSING_GLOBAL_CONF];
+		int i;
+		/* Do not free any memory if it points to argv */
+		if (conf == PARSING_ARGV)
+			continue;
+		for (i = 1; i < av->argc; i++)
+			xfree(av->argv[i]);
+		xfree(av->argv);
+		av->argc = 0;
+		av->argv = NULL;
+	}
+}
+
 /*
  * parse_options() is the point where the getopt parsing happens. The CLI
  * parsing as well as the configuration file parsing happens here.
@@ -556,29 +585,27 @@ int parse_options(int argc, char **argv, bool *usage_error,
 		idx = -1;
 		/* Only if opt is -1 we are going to the next configuration input */
 		if (opt == -1) {
-			/* Do not free any memory if it points to argv */
-			if (state != PARSING_ARGV + 1) {
-				int i;
-				for (i=1; i < _argc; i++) {
-					free(_argv[i]);
-				}
-				free(_argv);
-			}
+			struct arg_vector *av = &argvs[state - PARSING_GLOBAL_CONF];
+			int next_state;
 			/* This needs to be reset for a new getopt() run */
 			_argc = 0;
 			_argv = NULL;
 
-			state = next_config(argv, &_argv, no_default_config, state, cfg_file);
+			next_state = next_config(argv, &_argv, no_default_config, state, cfg_file);
 
 			/* if next_config() returns 0 it means no more configs found */
-			if (state == 0)
+			if (next_state == 0)
 				break;
 
-			if (!_argv)
-				continue;
+			av->argv = _argv;
 
-			_argc = count_elements(_argv);
-			optind = 0;
+			if (_argv) {
+				_argc = count_elements(_argv);
+				av->argc = _argc;
+				optind = 0;
+			}
+
+			state = next_state;
 		}
 
 		opt = getopt_long(_argc, _argv, short_opts, long_opts, &idx);
