@@ -95,11 +95,10 @@ int main(int argc, char *argv[], char *envp[])
 
 	init_opts();
 
-
 	ret = parse_options(argc, argv, &usage_error, &has_exec_cmd, state);
 
 	if (ret == 1)
-		return 1;
+		goto return_with_code;
 	if (ret == 2)
 		goto usage;
 	if (optind >= argc) {
@@ -112,7 +111,8 @@ int main(int argc, char *argv[], char *envp[])
 	if (optind < argc && !strcmp(argv[optind], "swrk")) {
 		if (argc != optind+2) {
 			fprintf(stderr, "Usage: criu swrk <fd>\n");
-			return 1;
+			ret = 1;
+			goto return_with_code;
 		}
 		/*
 		 * This is to start criu service worker from libcriu calls.
@@ -121,11 +121,14 @@ int main(int argc, char *argv[], char *envp[])
 		 * corresponding lib call change.
 		 */
 		opts.swrk_restore = true;
-		return cr_service_work(atoi(argv[optind+1]));
+		ret = cr_service_work(atoi(argv[optind+1]));
+		goto return_with_code;
 	}
 
-	if (check_options())
-		return 1;
+	if (check_options()) {
+		ret = 1;
+		goto return_with_code;
+	}
 
 	if (opts.imgs_dir == NULL)
 		SET_CHAR_OPTS(imgs_dir, ".");
@@ -152,8 +155,10 @@ int main(int argc, char *argv[], char *envp[])
 		}
 
 		opts.exec_cmd = xmalloc((argc - optind) * sizeof(char *));
-		if (!opts.exec_cmd)
-			return 1;
+		if (!opts.exec_cmd) {
+			ret = 1;
+			goto return_with_code;
+		}
 		memcpy(opts.exec_cmd, &argv[optind + 1], (argc - optind - 1) * sizeof(char *));
 		opts.exec_cmd[argc - optind - 1] = NULL;
 	} else {
@@ -175,7 +180,8 @@ int main(int argc, char *argv[], char *envp[])
 		ret = open_image_dir(opts.imgs_dir, image_dir_mode(argv, optind));
 		if (ret < 0) {
 			pr_err("Couldn't open image dir %s\n", opts.imgs_dir);
-			return 1;
+			ret = 1;
+			goto return_with_code;
 		}
 	}
 
@@ -191,7 +197,8 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
 		pr_perror("Failed to set a SIGPIPE signal ignore.");
-		return 1;
+		ret = 1;
+		goto return_with_code;
 	}
 
 	/*
@@ -206,15 +213,19 @@ int main(int argc, char *argv[], char *envp[])
 
 	if (chdir(opts.work_dir)) {
 		pr_perror("Can't change directory to %s", opts.work_dir);
-		return 1;
+		ret = 1;
+		goto return_with_code;
 	}
 
-	if (log_init(opts.output))
-		return 1;
+	if (log_init(opts.output)) {
+		ret = 1;
+		goto return_with_code;
+	}
 
 	if (kerndat_init()) {
 		pr_err("Could not initialize kernel features detection.\n");
-		return 1;
+		ret = 1;
+		goto return_with_code;
 	}
 
 	if (fault_injected(FI_CANNOT_MAP_VDSO))
@@ -223,7 +234,8 @@ int main(int argc, char *argv[], char *envp[])
 	if (!list_empty(&opts.inherit_fds)) {
 		if (strcmp(argv[optind], "restore")) {
 			pr_err("--inherit-fd is restore-only option\n");
-			return 1;
+			ret = 1;
+			goto return_with_code;
 		}
 		/* now that log file is set up, print inherit fd list */
 		inherit_fd_log();
@@ -235,7 +247,8 @@ int main(int argc, char *argv[], char *envp[])
 	if (!strcmp(argv[optind], "dump")) {
 		if (!opts.tree_id)
 			goto opt_pid_missing;
-		return cr_dump_tasks(opts.tree_id);
+		ret = cr_dump_tasks(opts.tree_id);
+		goto return_with_code;
 	}
 
 	if (!strcmp(argv[optind], "pre-dump")) {
@@ -244,10 +257,12 @@ int main(int argc, char *argv[], char *envp[])
 
 		if (opts.lazy_pages) {
 			pr_err("Cannot pre-dump with --lazy-pages\n");
-			return 1;
+			ret = 1;
+			goto return_with_code;
 		}
 
-		return cr_pre_dump_tasks(opts.tree_id) != 0;
+		ret = cr_pre_dump_tasks(opts.tree_id) != 0;
+		goto return_with_code;
 	}
 
 	if (!strcmp(argv[optind], "restore")) {
@@ -262,44 +277,61 @@ int main(int argc, char *argv[], char *envp[])
 			ret = 1;
 		}
 
-		return ret != 0;
+		ret = ret != 0;
+		goto return_with_code;
 	}
 
-	if (!strcmp(argv[optind], "lazy-pages"))
-		return cr_lazy_pages(opts.daemon_mode) != 0;
+	if (!strcmp(argv[optind], "lazy-pages")) {
+		ret = cr_lazy_pages(opts.daemon_mode) != 0;
+		goto return_with_code;
+	}
 
-	if (!strcmp(argv[optind], "check"))
-		return cr_check() != 0;
+	if (!strcmp(argv[optind], "check")) {
+		ret = cr_check() != 0;
+		goto return_with_code;
+	}
 
-	if (!strcmp(argv[optind], "page-server"))
-		return cr_page_server(opts.daemon_mode, false, -1) != 0;
+	if (!strcmp(argv[optind], "page-server")) {
+		ret = cr_page_server(opts.daemon_mode, false, -1) != 0;
+		goto return_with_code;
+	}
 
-	if (!strcmp(argv[optind], "service"))
-		return cr_service(opts.daemon_mode);
+	if (!strcmp(argv[optind], "service")) {
+		ret = cr_service(opts.daemon_mode);
+		goto return_with_code;
+	}
 
-	if (!strcmp(argv[optind], "dedup"))
-		return cr_dedup() != 0;
+	if (!strcmp(argv[optind], "dedup")) {
+		ret = cr_dedup() != 0;
+		goto return_with_code;
+	}
 
 	if (!strcmp(argv[optind], "cpuinfo")) {
 		if (!argv[optind + 1]) {
 			pr_err("cpuinfo requires an action: dump or check\n");
 			goto usage;
 		}
-		if (!strcmp(argv[optind + 1], "dump"))
-			return cpuinfo_dump();
-		else if (!strcmp(argv[optind + 1], "check"))
-			return cpuinfo_check();
+		if (!strcmp(argv[optind + 1], "dump")) {
+			ret = cpuinfo_dump();
+			goto return_with_code;
+		}
+		else if (!strcmp(argv[optind + 1], "check")) {
+			ret = cpuinfo_check();
+			goto return_with_code;
+		}
 	}
 
 	if (!strcmp(argv[optind], "exec")) {
 		pr_err("The \"exec\" action is deprecated by the Compel library.\n");
-		return -1;
+		ret = -1;
+		goto return_with_code;
 	}
 
 	if (!strcmp(argv[optind], "show")) {
 		pr_err("The \"show\" action is deprecated by the CRIT utility.\n");
 		pr_err("To view an image use the \"crit decode -i $name --pretty\" command.\n");
-		return -1;
+		ret = -1;
+		goto return_with_code;
 	}
 
 	pr_err("unknown command: %s\n", argv[optind]);
@@ -502,9 +534,14 @@ usage:
 "  -V|--version          show version\n"
 	);
 
-	return 0;
+	ret = 0;
+	goto return_with_code;
 
 opt_pid_missing:
 	pr_err("pid not specified\n");
-	return 1;
+	ret = 1;
+	goto return_with_code;
+
+return_with_code:
+	return ret;
 }
