@@ -542,6 +542,17 @@ void criu_set_shell_job(bool shell_job)
 	criu_local_set_shell_job(global_opts, shell_job);
 }
 
+void criu_local_set_unprivileged(criu_opts *opts, bool unprivileged)
+{
+	opts->rpc->has_unprivileged = true;
+	opts->rpc->unprivileged = unprivileged;
+}
+
+void criu_set_unprivileged(bool unprivileged)
+{
+	criu_local_set_unprivileged(global_opts, unprivileged);
+}
+
 void criu_local_set_orphan_pts_master(criu_opts *opts, bool orphan_pts_master)
 {
 	opts->rpc->has_orphan_pts_master = true;
