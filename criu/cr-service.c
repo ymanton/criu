@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <arpa/inet.h>
 #include <sched.h>
+#include <sys/prctl.h>
 
 #include "version.h"
 #include "crtools.h"
@@ -406,6 +407,14 @@ static int setup_opts_from_req(int sk, CriuOpts *req)
 
 	if (req->config_file) {
 		pr_debug("Would overwrite RPC settings with values from %s\n", req->config_file);
+	}
+
+	if (req->has_unprivileged && req->unprivileged) {
+		int dumpable = prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+		if (dumpable < 0) {
+			pr_perror("Unable to set PR_SET_DUMPABLE");
+			return 1;
+		}
 	}
 
 	if (kerndat_init())
