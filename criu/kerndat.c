@@ -818,6 +818,20 @@ static int kerndat_x86_has_ptrace_fpu_xsave_bug(void)
 	return 0;
 }
 
+static int kerndat_has_rseq(void)
+{
+	if (syscall(__NR_rseq, NULL, 0, 0, 0) != -1) {
+		pr_err("rseq should fail\n");
+		return -1;
+	}
+	if (errno == ENOSYS)
+		pr_info("rseq syscall isn't supported\n");
+	else
+		kdat.has_rseq = true;
+
+	return 0;
+}
+
 #define KERNDAT_CACHE_NAME	"criu.kdat"
 #define KERNDAT_CACHE_FILE	KDAT_RUNDIR"/"KERNDAT_CACHE_NAME
 
@@ -1468,6 +1482,10 @@ int kerndat_init(void)
 		kerndat_has_pidfd_open();
 	if (!ret && kerndat_has_nspid()) {
 		pr_err("kerndat_has_nspid failed when initializing kerndat.\n");
+		ret = -1;
+	}
+	if (!ret && kerndat_has_rseq()) {
+		pr_err("kerndat_has_rseq failed when initializing kerndat.\n");
 		ret = -1;
 	}
 

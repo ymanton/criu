@@ -86,6 +86,7 @@ struct kerndat_s {
 	 */
 	char release[RELEASE_SIZE];
 	char nodename[NODENAME_SIZE];
+	bool has_rseq;
 };
 
 extern struct kerndat_s kdat;
