@@ -802,6 +802,15 @@ static int check_ptrace_dump_seccomp_filters(void)
 	return ret;
 }
 
+static int check_ptrace_get_rseq_conf(void)
+{
+	if (!kdat.has_ptrace_get_rseq_conf) {
+		pr_warn("ptrace(PTRACE_GET_RSEQ_CONFIGURATION) isn't supported. C/R of processes which are using rseq() won't work.\n");
+		return -1;
+	}
+	return 0;
+}
+
 static int check_mem_dirty_track(void)
 {
 	if (!kdat.has_dirty_track) {
@@ -1444,6 +1453,7 @@ int cr_check(void)
 		ret |= check_ns_pid();
 		ret |= check_apparmor_stacking();
 		ret |= check_network_lock_nftables();
+		ret |= check_ptrace_get_rseq_conf();
 	}
 
 	/*
@@ -1556,6 +1566,7 @@ static struct feature_list feature_list[] = {
 	{ "ns_pid", check_ns_pid },
 	{ "apparmor_stacking", check_apparmor_stacking },
 	{ "network_lock_nftables", check_network_lock_nftables },
+	{ "get_rseq_conf", check_ptrace_get_rseq_conf },
 	{ NULL, NULL },
 };
 
