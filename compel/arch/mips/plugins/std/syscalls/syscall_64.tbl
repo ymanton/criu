@@ -115,3 +115,4 @@ __NR_fsmount			5432		sys_fsmount		(int fd, unsigned int flags, unsigned int attr
 __NR_clone3			5435		sys_clone3		(struct clone_args *uargs, size_t size)
 __NR_pidfd_open			5434		sys_pidfd_open		(pid_t pid, unsigned int flags)
 __NR_pidfd_getfd		5438		sys_pidfd_getfd		(int pidfd, int targetfd, unsigned int flags)
+__NR_rseq		        5327		sys_rseq		(void *rseq, uint32_t rseq_len, int flags, uint32_t sig)
