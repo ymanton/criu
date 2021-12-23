@@ -41,7 +41,7 @@ export CONTAINER_TERMINAL
 ifeq ($(UNAME),x86_64)
 	# On anything besides x86_64 Travis is running unprivileged LXD
 	# containers which do not support running docker with '--privileged'.
-	CONTAINER_OPTS := --rm $(CONTAINER_TERMINAL) --privileged -v /lib/modules:/lib/modules --tmpfs /run
+	CONTAINER_OPTS := --rm $(CONTAINER_TERMINAL) --privileged --userns=host --cgroupns=host -v /lib/modules:/lib/modules --tmpfs /run
 else
 	CONTAINER_OPTS := --rm -v /lib/modules:/lib/modules --tmpfs /run
 endif
@@ -95,7 +95,10 @@ vagrant-fedora-no-vdso: setup-vagrant
 vagrant-fedora-non-root: setup-vagrant
 	./vagrant.sh fedora-non-root
 
-.PHONY: setup-vagrant vagrant-fedora-no-vdso vagrant-fedora-non-root
+vagrant-fedora-rawhide: setup-vagrant
+	./vagrant.sh fedora-rawhide
+
+.PHONY: setup-vagrant vagrant-fedora-no-vdso vagrant-fedora-non-root vagrant-fedora-rawhide
 
 %:
 	$(MAKE) -C ../build $@$(target-suffix)

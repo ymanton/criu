@@ -71,4 +71,16 @@ fedora-non-root() {
 	ssh default 'cd /vagrant/criu; sudo ./test/zdtm.py run -t zdtm/static/env00 -t zdtm/static/pthread00 -f h; sudo chmod 777 test/dump/zdtm/static/{env00,pthread00}; sudo ./test/zdtm.py run -t zdtm/static/env00 -t zdtm/static/pthread00 -f h --rootless'
 }
 
+fedora-rawhide() {
+	#
+	# Workaround the problem:
+	# error running container: error from /usr/bin/crun creating container for [...]: sd-bus call: Transport endpoint is not connected
+	# Let's just use runc instead of crun
+	# see also https://github.com/kata-containers/tests/issues/4283
+	#
+	ssh default 'sudo dnf remove -y crun || true'
+	ssh default sudo dnf install -y podman runc
+	ssh default 'cd /vagrant; tar xf criu.tar; cd criu; sudo -E make -C scripts/ci fedora-rawhide CONTAINER_RUNTIME=podman BUILD_OPTIONS="--security-opt seccomp=unconfined"'
+}
+
 $1
