@@ -231,6 +231,12 @@ struct task_restore_args {
 	bool has_clone3_set_tid;
 	uid_t uid;
 	u32 cap_eff[CR_CAP_SIZE];
+
+	/*
+	 * info about rseq from libc used to
+	 * unregister it before memory restoration procedure
+	 */
+	struct rst_rseq_param libc_rseq;
 } __aligned(64);
 
 /*
