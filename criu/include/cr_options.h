@@ -151,6 +151,7 @@ struct cr_options {
 	int			tcp_skip_in_flight;
 	bool			lazy_pages;
 	char			*work_dir;
+	int ignore_rwx_change_on_restore;
 
 	/*
 	 * When we scheduler for removal some functionality we first

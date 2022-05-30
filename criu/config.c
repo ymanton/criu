@@ -541,6 +541,7 @@ int parse_options(int argc, char **argv, bool *usage_error,
 		{ "cgroup-yard",		required_argument,	0, 1096 },
 		{ "pre-dump-mode",		required_argument,	0, 1097},
 		{ "file-validation",		required_argument,	0, 1098	},
+		BOOL_OPT("ignore-file-rwx-changes-on-resore", &opts.ignore_rwx_change_on_restore),
 		BOOL_OPT("unprivileged", &opts.unprivileged),
 		{ },
 	};

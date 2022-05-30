@@ -447,6 +447,8 @@ usage:
 "  --file-validation METHOD\n"
 "			pass the validation method to be used; argument\n"
 "			can be 'filesize' or 'buildid' (default).\n"
+"  --ignore-file-rwx-changes-on-resore\n"
+"            Ignore changes in file permissions (r/w/x for u/g/o) on restore.\n"
 "\n"
 "Check options:\n"
 "  Without options, \"criu check\" checks availability of absolutely required\n"
