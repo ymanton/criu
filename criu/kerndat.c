@@ -1322,6 +1322,10 @@ static int root_only_init(void)
 		pr_err("kerndat_socket_netns failed when initializing kerndat.\n");
 		ret = -1;
 	}
+	if (!ret && kerndat_has_nftables_concat()) {
+		pr_err("kerndat_has_nftables_concat failed when initializing kerndat.\n");
+		ret = -1;
+	}
 
 	return ret;
 }
@@ -1464,10 +1468,6 @@ int kerndat_init(void)
 		kerndat_has_pidfd_open();
 	if (!ret && kerndat_has_nspid()) {
 		pr_err("kerndat_has_nspid failed when initializing kerndat.\n");
-		ret = -1;
-	}
-	if (!ret && kerndat_has_nftables_concat()) {
-		pr_err("kerndat_has_nftables_concat failed when initializing kerndat.\n");
 		ret = -1;
 	}
 
