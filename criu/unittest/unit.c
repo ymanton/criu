@@ -51,6 +51,7 @@ int main(int argc, char *argv[], char *envp[])
 	assert(!strcmp(configuration[0], "--verbosity"));
 	assert(!strcmp(configuration[1], "4"));
 
+	pr_msg("Error testing, expect an error message: ");
 	i = parse_statement(0, "verbosity \"\n", configuration);
 	assert(i == -1);
 
@@ -69,6 +70,7 @@ int main(int argc, char *argv[], char *envp[])
 	assert(!strcmp(configuration[0], "--verbosity"));
 	assert(!strcmp(configuration[1], "4"));
 
+	pr_msg("Error testing, expect an error message: ");
 	i = parse_statement(0, "verbosity 4 no-comment\n", configuration);
 	assert(i == -1);
 
@@ -90,6 +92,7 @@ int main(int argc, char *argv[], char *envp[])
 	assert(!strcmp(configuration[0], "--lsm-profile"));
 	assert(!strcmp(configuration[1], "selinux:something\"with\"quotes"));
 
+	pr_msg("Error testing, expect an error message: ");
 	i = parse_statement(0, "work-dir \"/tmp with spaces\" no-comment\n", configuration);
 	assert(i == -1);
 
@@ -98,6 +101,7 @@ int main(int argc, char *argv[], char *envp[])
 	assert(!strcmp(configuration[0], "--work-dir"));
 	assert(!strcmp(configuration[1], "/tmp with spaces"));
 
+	pr_msg("Error testing, expect an error message: ");
 	i = parse_statement(0, "a b c d e f g h i\n", configuration);
 	assert(i == -1);
 
