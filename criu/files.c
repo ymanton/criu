@@ -21,7 +21,7 @@
 #include "image.h"
 #include "common/list.h"
 #include "rst-malloc.h"
-#include "util-pie.h"
+#include "util-caps.h"
 #include "common/lock.h"
 #include "sockets.h"
 #include "pstree.h"
@@ -1346,6 +1346,24 @@ static int fchroot(int fd)
 	return chroot(".");
 }
 
+static int need_chroot(int saved_root)
+{
+	struct stat saved_root_stat, cur_root_stat;
+
+	if (fstat(saved_root, &saved_root_stat) == -1) {
+		pr_perror("Failed to stat saved root dir");
+		return -1;
+	}
+
+	if (stat("/proc/self/root", &cur_root_stat) == -1) {
+		pr_perror("Failed to stat current root dir");
+		return -1;
+	}
+
+	return saved_root_stat.st_ino != cur_root_stat.st_ino ||
+	       saved_root_stat.st_dev != cur_root_stat.st_dev;
+}
+
 int restore_fs(struct pstree_item *me)
 {
 	int dd_root = -1, dd_cwd = -1, ret, err = -1;
@@ -1372,11 +1390,15 @@ int restore_fs(struct pstree_item *me)
 	 * Now do chroot/chdir. Chroot goes first as it calls chdir into
 	 * dd_root so we'd need to fix chdir after it anyway.
 	 */
-
-	ret = fchroot(dd_root);
-	if (ret < 0) {
-		pr_perror("Can't change root");
-		goto out;
+	if (need_chroot(dd_root)) {
+		ret = fchroot(dd_root);
+		if (ret < 0) {
+			pr_perror("Can't change root");
+			goto out;
+		}
+	}
+	else {
+		pr_info("Skipping chroot, appears not needed\n");
 	}
 
 	ret = fchdir(dd_cwd);
