@@ -21,7 +21,7 @@
 #include "image.h"
 #include "common/list.h"
 #include "rst-malloc.h"
-#include "util-pie.h"
+#include "util-caps.h"
 #include "common/lock.h"
 #include "sockets.h"
 #include "pstree.h"
@@ -1332,6 +1332,8 @@ out:
 
 static int fchroot(int fd)
 {
+	if (opts.unprivileged && !has_cap_sys_chroot(opts.cap_eff))
+		return 0;
 	/*
 	 * There's no such thing in syscalls. We can emulate
 	 * it using fchdir()
