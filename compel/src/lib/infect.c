@@ -967,14 +967,6 @@ static int compel_map_exchange(struct parasite_ctl *ctl, unsigned long size)
 	return ret;
 }
 
-int compel_infect(struct parasite_ctl *ctl, unsigned long nr_threads, unsigned long args_size)
-{
-	if (compel_infect_no_daemon(ctl, nr_threads, args_size) || parasite_start_daemon(ctl))
-		return -1;
-
-	return 0;
-}
-
 int compel_infect_no_daemon(struct parasite_ctl *ctl, unsigned long nr_threads, unsigned long args_size)
 {
 	int ret;
@@ -1091,6 +1083,17 @@ int compel_infect_no_daemon(struct parasite_ctl *ctl, unsigned long nr_threads, 
 
 err:
 	return -1;
+}
+
+int compel_infect(struct parasite_ctl *ctl, unsigned long nr_threads, unsigned long args_size)
+{
+	if (compel_infect_no_daemon(ctl, nr_threads, args_size))
+		return -1;
+
+	if (parasite_start_daemon(ctl))
+		return -1;
+
+	return 0;
 }
 
 struct parasite_thread_ctl *compel_prepare_thread(struct parasite_ctl *ctl, int pid)
