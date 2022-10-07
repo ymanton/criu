@@ -889,6 +889,10 @@ NON-ROOT
 or with the *CAP_CHECKPOINT_RESTORE* capability introduces in Linux kernel 5.9.
 *CAP_CHECKPOINT_RESTORE* is the minimum that is required.
 
+*criu* also needs either *CAP_SYS_PTRACE* or a value of 0 in
+*/proc/sys/kernel/yama/ptrace_scope* (see *ptrace*(2)) to be able to interrupt
+the process for dumping.
+
 Running *criu* as non-root has many limitations and depending on the process
 to checkpoint and restore it may not be possible.
 
