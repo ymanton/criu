@@ -1346,7 +1346,7 @@ static void swrk_wait(criu_opts *opts)
 		waitpid(opts->swrk_pid, NULL, 0);
 }
 
-static int swrk_connect(criu_opts *opts, bool d)
+static int swrk_connect(criu_opts *opts, bool daemonize)
 {
 	int sks[2], pid, ret = -1;
 
@@ -1382,7 +1382,7 @@ static int swrk_connect(criu_opts *opts, bool d)
 		close(sks[0]);
 		sprintf(fds, "%d", sks[1]);
 
-		if (d)
+		if (daemonize)
 			if (daemon(0, 1)) {
 				perror("Can't detach for a self-dump");
 				goto child_err;
@@ -1420,7 +1420,7 @@ err:
 	goto out;
 }
 
-static int criu_connect(criu_opts *opts, bool d)
+static int criu_connect(criu_opts *opts, bool daemonize)
 {
 	int fd, ret;
 	struct sockaddr_un addr;
@@ -1429,7 +1429,7 @@ static int criu_connect(criu_opts *opts, bool d)
 	if (opts->service_comm == CRIU_COMM_FD)
 		return opts->service_fd;
 	else if (opts->service_comm == CRIU_COMM_BIN)
-		return swrk_connect(opts, d);
+		return swrk_connect(opts, daemonize);
 
 	fd = socket(AF_LOCAL, SOCK_SEQPACKET, 0);
 	if (fd < 0) {
@@ -1511,12 +1511,12 @@ static int send_req_and_recv_resp(criu_opts *opts, CriuReq *req, CriuResp **resp
 {
 	int fd;
 	int ret = 0;
-	bool d = false;
+	bool daemonize = false;
 
 	if (req->type == CRIU_REQ_TYPE__DUMP && req->opts->has_pid == false)
-		d = true;
+		daemonize = true;
 
-	fd = criu_connect(opts, d);
+	fd = criu_connect(opts, daemonize);
 	if (fd < 0) {
 		perror("Can't connect to criu");
 		ret = -ECONNREFUSED;
