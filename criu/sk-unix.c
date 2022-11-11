@@ -530,6 +530,12 @@ dump:
 	if (dump_socket_opts(lfd, skopts))
 		goto err;
 
+	/* We need CAP_NET_ADMIN to restore SO_MARK, but we know the
+	 * service socket doesn't use it so avoid restoring it so that
+	 * the user doesn't have to grant the cap just for this. */
+	if (opts.unprivileged && (ue->uflags & USK_SERVICE))
+		skopts->has_so_mark = false;
+
 	pr_info("Dumping unix socket at %d\n", p->fd);
 	show_one_unix("Dumping", sk);
 
