@@ -2280,6 +2280,8 @@ static int restore_root_task(struct pstree_item *init)
 	if (ret < 0)
 		goto out;
 
+	pr_debug("restore_origin_ns_hook:\n");
+
 	restore_origin_ns_hook();
 
 	if (rsti(init)->clone_flags & CLONE_PARENT) {
@@ -2307,6 +2309,8 @@ static int restore_root_task(struct pstree_item *init)
 
 	if (!root_ns_mask)
 		goto skip_ns_bouncing;
+
+	pr_debug("ns bouncing:\n");
 
 	/*
 	 * uid_map and gid_map must be filled from a parent user namespace.
@@ -2355,9 +2359,13 @@ static int restore_root_task(struct pstree_item *init)
 
 skip_ns_bouncing:
 
+	pr_debug("restore_wait_inprogress_tasks:\n");
+
 	ret = restore_wait_inprogress_tasks();
 	if (ret < 0)
 		goto out_kill;
+
+	pr_debug("apply_memfd_seals:\n");
 
 	ret = apply_memfd_seals();
 	if (ret < 0)
@@ -2373,21 +2381,31 @@ skip_ns_bouncing:
 			task_entries->nr_threads--;
 	}
 
+	pr_debug("CR_STATE_RESTORE_SIGCHLD:\n");
+
 	ret = restore_switch_stage(CR_STATE_RESTORE_SIGCHLD);
 	if (ret < 0)
 		goto out_kill;
+
+	pr_debug("stop_usernsd:\n");
 
 	ret = stop_usernsd();
 	if (ret < 0)
 		goto out_kill;
 
+	pr_debug("move_veth_to_bridge:\n");
+
 	ret = move_veth_to_bridge();
 	if (ret < 0)
 		goto out_kill;
 
+	pr_debug("prepare_cgroup_properties:\n");
+
 	ret = prepare_cgroup_properties();
 	if (ret < 0)
 		goto out_kill;
+
+	pr_debug("FI_POST_RESTORE:\n");
 
 	if (fault_injected(FI_POST_RESTORE))
 		goto out_kill;
@@ -2400,6 +2418,8 @@ skip_ns_bouncing:
 		goto out_kill;
 	}
 
+	pr_debug("depopulate_roots_yard:\n");
+
 	/*
 	 * There is no need to call try_clean_remaps() after this point,
 	 * as restore went OK and all ghosts were removed by the openers.
@@ -2407,13 +2427,19 @@ skip_ns_bouncing:
 	if (depopulate_roots_yard(mnt_ns_fd, false))
 		goto out_kill;
 
+	pr_debug("write_restored_pid:\n");
+
 	close_safe(&mnt_ns_fd);
 
 	if (write_restored_pid())
 		goto out_kill;
 
+	pr_debug("network_unlock:\n");
+
 	/* Unlock network before disabling repair mode on sockets */
 	network_unlock();
+
+	pr_debug("ignore_kids:\n");
 
 	/*
 	 * Stop getting sigchld, after we resume the tasks they
@@ -2421,12 +2447,16 @@ skip_ns_bouncing:
 	 */
 	ignore_kids();
 
+	pr_debug("attach_to_tasks:\n");
+
 	/*
 	 * -------------------------------------------------------------
 	 * Network is unlocked. If something fails below - we lose data
 	 * or a connection.
 	 */
 	attach_to_tasks(root_seized);
+
+	pr_debug("CR_STATE_RESTORE_CREDS:\n");
 
 	if (restore_switch_stage(CR_STATE_RESTORE_CREDS))
 		goto out_kill_network_unlocked;
