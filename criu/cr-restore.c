@@ -2034,6 +2034,8 @@ static int catch_tasks(bool root_seized, enum trace_flags *flag)
 	for_each_pstree_item(item) {
 		int status, i, ret;
 
+		pr_debug("catch_tasks:task:\n");
+
 		if (!task_alive(item))
 			continue;
 
@@ -2046,6 +2048,8 @@ static int catch_tasks(bool root_seized, enum trace_flags *flag)
 
 		for (i = 0; i < item->nr_threads; i++) {
 			pid_t pid = item->threads[i].real;
+
+			pr_debug("catch_tasks:task:thread:\n");
 
 			if (ptrace(PTRACE_INTERRUPT, pid, 0, 0)) {
 				pr_perror("Can't interrupt the %d task", pid);
